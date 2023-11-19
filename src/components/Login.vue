@@ -6,39 +6,39 @@ let initialVal = {
   username: "",
   password: "",
 };
-let form = {};
-let errors = ref(initialVal);
+let form = ref({ ...initialVal });
+let errors = ref({ ...initialVal });
+
 let success = "";
-// Enable credentials if needed
-function submitform(e) {
+// submitform
+async function submitform(e) {
+  errors.value = { ...initialVal };
   // getting Form data
-  let formData = new FormData(e.target);
-  for (let [name, value] of formData) {
-    form[name] = value;
-  }
+  console.log(form);
+  console.log(errors);
   // submitting form data
-  if (!form.username) {
-    errors.value.password = "";
+  if (!form.value.username) {
     errors.value.username = "please enter username";
     return;
-  } else if (!form.password) {
-    errors.value.username = "";
+  }
+  if (!form.value.password) {
     errors.value.password = "please enter password";
     return;
-  } else {
-    errors.value.password = "";
-    errors.value.username = "";
-    console.log(form);
-    axios
-      .post("http://localhost:8080/api/login", form, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((res) => {
-        console.log(res.data.message);
-        form = initialVal;
-      });
+  } else if (form.value.password.length < 8) {
+    errors.value.password = "password length must be 8 letters";
+  }
+  try {
+    let res = await axios.post("http://localhost:8080/api/login", form.value, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    console.log(res);
+    alert(`welcome ${form.value.username}`);
+    form.value = { ...initialVal };
+  } catch (err) {
+    console.log(err.response.data);
+    errors.value.password = err.response.data;
   }
 }
 defineProps({
@@ -74,6 +74,7 @@ defineProps({
                       name="username"
                       class="form-control"
                       placeholder="Username"
+                      v-model="form.username"
                     />
                     <div
                       v-if="errors.username"
@@ -92,6 +93,7 @@ defineProps({
                       name="password"
                       class="form-control"
                       placeholder="Password"
+                      v-model="form.password"
                     />
                     <div
                       v-if="errors.password"
